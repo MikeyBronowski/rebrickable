@@ -1,0 +1,38 @@
+name: Update Rebrickable Data
+
+on:
+  schedule:
+    - cron: '0 21 * * 4'  # Every Thursday at 21:00 UTC
+  workflow_dispatch:        # Also allow manual trigger
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Rebrickable CSVs
+        run: |
+          mkdir -p data
+          FILES="themes colors part_categories parts sets inventories inventory_parts minifigs"
+          for f in $FILES; do
+            echo "Downloading $f.csv.gz..."
+            curl -L -o "$f.csv.gz" \
+              "https://cdn.rebrickable.com/media/downloads/$f.csv.gz"
+            echo "$f: $(du -sh $f.csv.gz | cut -f1)"
+          done
+
+      - name: Check for changes
+        id: check
+        run: |
+          git diff --quiet data/ && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if changed
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add 
+          git commit -m "chore: update Rebrickable data $(date -u +%Y-%m-%d)"
+
+          git push
