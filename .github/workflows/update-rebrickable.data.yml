@@ -23,9 +23,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download Rebrickable CSVs
-        working-directory: data
         run: |
-          mkdir -p .
           FILES="themes colors part_categories parts sets inventories inventory_parts minifigs"
           for f in $FILES; do
             echo "Downloading $f.csv.gz..."
@@ -37,7 +35,7 @@ jobs:
       - name: Check for changes
         id: check
         run: |
-          if git diff --quiet -- data/; then
+          if git diff --quiet -- '*.csv.gz'; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -49,6 +47,6 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add data
+          git add *.csv.gz
           git commit -m "chore: update Rebrickable data $(date -u +%Y-%m-%d)"
           git push origin HEAD:main
